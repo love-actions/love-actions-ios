@@ -1,0 +1,27 @@
+name: Love actions for iOS
+description: iOS CI/CD for LÖVE based games
+branding:
+  icon: "heart"
+  color: "red"
+inputs:
+  app-name:
+    description: |
+      App display name
+      Would be used in platform/xcode/ios/love-ios.plist
+    required: false
+    default: "LÖVE App"
+  bundle-id:
+    description: |
+      App bundle id
+      Would be used in platform/xcode/love.xcodeproj/project.pbxproj
+    required: false
+    default: "org.love2d.ios"
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout love
+      uses: actions/checkout@v3
+      with: 
+        repository: love2d/love
+        ref: c35356c841976eb6f370347b81eec845d5520338
+        path: love
