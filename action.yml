@@ -219,7 +219,7 @@ runs:
         // freetypeInfoPlist['CFBundleIdentifier'] = 'org.freetype.freetype';
         // fs.writeFileSync(freetypeInfoPath, plist['build'](freetypeInfoPlist));
         
-        const exportPlistPath = './love-actions-ios/love/platform/xcode/macos/macos-copy-app.plist';
+        const exportPlistPath = './love-actions-ios/love/platform/xcode/macosx/macos-copy-app.plist';
         const exportPlist = plist['parse'](fs.readFileSync(exportPlistPath, 'utf8'));
         exportPlist['method'] = 'app-store';
         fs.writeFileSync(exportPlistPath, plist['build'](exportPlist));
@@ -264,7 +264,7 @@ runs:
         -authenticationKeyIssuerID ${{ inputs.api-issuer-id }} \
         -archivePath ${{ env.ARCHIVE_PATH }} \
         -exportPath ./love-actions-ios/ \
-        -exportOptionsPlist ./love-actions-ios/love/platform/xcode/macos/macos-copy-app.plist
+        -exportOptionsPlist ./love-actions-ios/love/platform/xcode/macosx/macos-copy-app.plist
 
         ls -l ./love-actions-ios/
     - name: Move ipa and logs
