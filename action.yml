@@ -270,7 +270,7 @@ runs:
     - name: Move ipa and logs
       shell: bash
       run: |
-        mv "./love-actions-ios/${{ inputs.app-name }}.pkg" "${{ inputs.output-folder }}/${{ inputs.product-name }}.ipa"
+        mv "./love-actions-ios/${{ inputs.app-name }}.ipa" "${{ inputs.output-folder }}/${{ inputs.product-name }}.ipa"
         mv ./love-actions-ios/DistributionSummary.plist ${{ inputs.output-folder }}
         mv ./love-actions-ios/ExportOptions.plist ${{ inputs.output-folder }}
         mv ./love-actions-ios/Packaging.log ${{ inputs.output-folder }}
