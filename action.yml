@@ -9,19 +9,283 @@ inputs:
       App display name
       Would be used in platform/xcode/ios/love-ios.plist
     required: false
-    default: "LÖVE App"
+    default: "LÖVE for iOS"
   bundle-id:
     description: |
       App bundle id
       Would be used in platform/xcode/love.xcodeproj/project.pbxproj
     required: false
-    default: "org.love2d.ios"
+    default: "org.love2d.iOS"
+  copyright:
+    description: |
+      App copyright info
+      Would be used in platform/xcode/ios/love-ios.plist
+    required: false
+  icon-path:
+    description: |
+      Icon path
+      Should be .icns format
+      Would be used in platform/xcode/Images.xcassets/iOS AppIcon.appiconset
+    required: true
+    default: "./icon.icns"
+  love-package:
+    description: |
+      Love package
+      Would be used to assemble the executable
+    required: false
+    default: "./game.love"
+  product-name:
+    description: |
+      Base name of the package
+      Would be used to rename products
+    required: false
+    default: "love_app"
+  version-string:
+    description: |
+      App version string
+      Use 3 numbers seperated by dots
+      Looks like 3.2.1
+    required: false
+    default: "11.4"
+  output-folder:
+    description: |
+      Packages output folder
+      All packages would be placed here
+    required: false
+    default: "./build"
+  apple-development-base64:
+    description: |
+      Apple Development certificate base64 content
+      Would be used to sign the app
+    required: true
+  apple-development-password:
+    description: |
+      Apple Distribution certificate password
+      Would be used to sign the app
+    required: true
+  api-key:
+    description: |
+      App Store Connect API key content
+      Would be used to automaticly update profiles, app IDs and certificates
+    required: true
+  api-key-id:
+    description: |
+      App Store Connect API key ID
+      Would be used to automaticly update profiles, app IDs and certificates
+    required: true
+  api-issuer-id:
+    description: |
+      App Store Connect API issuer ID
+      Would be used to automaticly update profiles, app IDs and certificates
+    required: true
+  team-id:
+    description: |
+      Developer team id
+      Would be used to sign the package
+    required: true
+  apple-id:
+    description: |
+      App Apple ID
+      Would be used to upload the package
+    required: true
+outputs:
+  package-paths:
+    description: |
+      Paths to the built packages in a bash list
+      Would be paths relative to repository root, separated by spaces
+      Looks like: ./build/game.ipa
+    value: ${{ steps.gather-packages.outputs.package-paths }}
 runs:
   using: "composite"
   steps:
+    - name: Create directories
+      shell: bash
+      run: |
+        mkdir -p ./love-actions-ios/
+        mkdir -p ${{ inputs.output-folder }}
+    - name: Setup environment
+      id: setup-env
+      shell: python3 {0}
+      run: |
+        import os
+        version_string = "${{ inputs.version-string }}"
+        version_segments = version_string.split(".")
+        build_version = version_segments[0] + version_segments[1].zfill(2) + version_segments[2].zfill(2)
+        attempt = "${{ github.run_attempt }}"
+        os.system("echo ::set-output name=bundle-version::" + build_version + ".2.${{ github.run_number }}" + attempt.zfill(2))
     - name: Checkout love
       uses: actions/checkout@v3
-      with: 
-        repository: love2d/love
+      with:
+        path: ./love-actions-ios/love
         ref: c35356c841976eb6f370347b81eec845d5520338
-        path: love
+        repository: love2d/love
+    - name: Checkout framework SDK
+      uses: actions/checkout@v3
+      with:
+        path: ./love-actions-ios/love-apple-dependencies
+        ref: 402eed62c2bd654a860bb64544393285fb640497
+        repository: love2d/love-apple-dependencies
+    - name: Move framework SDK and love package
+      shell: bash
+      run: |
+        mv ./love-actions-ios/love-apple-dependencies/iOS/libraries ./love-actions-ios/love/platform/xcode/ios
+        mv ${{ inputs.love-package }} ./love-actions-ios/love/platform/xcode/game.love
+        mkdir -p ./love-actions-ios/love/platform/xcode/build/Debug
+        mkdir -p ./love-actions-ios/love/platform/xcode/build/Release
+    - name: Process icons
+      shell: bash
+      run: |
+        rm -rf ./love-actions-ios/love/platform/xcode/Images.xcassets/OS\ X\ AppIcon.appiconset/*.png
+        iconutil -c iconset -o ./love-actions-ios/icon.iconset ${{ inputs.icon-path }}
+        mv -f ./love-actions-ios/icon.iconset/* ./love-actions-ios/love/platform/xcode/Images.xcassets/OS\ X\ AppIcon.appiconset/
+    - name: Create API key
+      shell: bash
+      run: |
+        mkdir -p ~/.appstoreconnect/private_keys/
+        echo -n "${{ inputs.api-key }}" > ~/.appstoreconnect/private_keys/AuthKey_${{ inputs.api-key-id }}.p8
+    - name: Create keychain and import certificates
+      env:
+        CERTIFICATE_PATH: ./love-actions-ios/cert.p12
+        KEYCHAIN_PASSWORD: build_keychain_password
+        KEYCHAIN_PATH: ./love-actions-ios/build.keychain
+      shell: bash
+      run: |
+        security create-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_PATH
+        security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+        security default-keychain -s $KEYCHAIN_PATH
+        security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_PATH
+        
+        echo -n "${{ inputs.apple-development-base64 }}" | base64 --decode --output $CERTIFICATE_PATH
+        security import $CERTIFICATE_PATH -A -f pkcs12 -k $KEYCHAIN_PATH -P "${{ inputs.apple-development-password }}" -t cert
+        rm $CERTIFICATE_PATH
+        
+        security set-key-partition-list -S apple-tool:,apple:,codesign:,productbuild:,productsign: -s -k $KEYCHAIN_PASSWORD $KEYCHAIN_PATH
+    - name: Update XCode project and revoke existing API created certificates
+      shell: bash
+      run: |
+        npm i plist xcode node-app-store-connect-api
+
+        cat <<EOT >> update.js
+        const fs = require('fs');
+        const plist = require('plist');
+        const xcode = require('xcode');
+
+        const configuration = null;
+
+        const liblovePbxprojPath = './love-actions-ios/love/platform/xcode/liblove.xcodeproj/project.pbxproj';
+        const libloveProject = xcode.project(liblovePbxprojPath).parseSync();
+        const libloveTarget = 'liblove-ios'
+        libloveProject.updateBuildProperty('MACOSX_DEPLOYMENT_TARGET', '10.9', configuration, libloveTarget);
+        fs.writeFileSync(liblovePbxprojPath, libloveProject.writeSync());
+
+        const lovePbxprojPath = './love-actions-ios/love/platform/xcode/love.xcodeproj/project.pbxproj';
+        const loveProject = xcode.project(lovePbxprojPath).parseSync();
+        const loveTarget = 'love-ios'
+        loveProject.updateBuildProperty('CODE_SIGN_IDENTITY', '"Apple Development"', configuration, loveTarget);
+        loveProject.updateBuildProperty('CODE_SIGN_STYLE', '"Automatic"', configuration, loveTarget);
+        loveProject.updateBuildProperty('CURRENT_PROJECT_VERSION', '${{ steps.setup-env.outputs.bundle-version }}', configuration, loveTarget);
+        loveProject.updateBuildProperty('DEVELOPMENT_TEAM', '${{ inputs.team-id }}', configuration, loveTarget);
+        loveProject.updateBuildProperty('MACOSX_DEPLOYMENT_TARGET', '10.9', configuration, loveTarget);
+        loveProject.updateBuildProperty('MARKETING_VERSION', '${{ inputs.version-string }}', configuration, loveTarget);
+        loveProject.updateBuildProperty('PRODUCT_BUNDLE_IDENTIFIER', '${{ inputs.bundle-id }}', configuration, loveTarget);
+        loveProject.updateBuildProperty('PRODUCT_NAME', '${{ inputs.product-name }}', configuration, loveTarget);
+        loveProject.updateBuildProperty('PROVISIONING_PROFILE_SPECIFIER', '""', configuration, loveTarget);
+        loveProject.addResourceFile(
+            './game.love',
+            {target: loveProject.findTargetKey(`"${loveTarget}"`)},
+            loveProject.findPBXGroupKey({name: 'Resources'})
+        );
+        fs.writeFileSync(lovePbxprojPath, loveProject.writeSync());
+
+        const infoPath = './love-actions-ios/love/platform/xcode/ios/love-ios.plist';
+        const infoPlist = plist['parse'](fs.readFileSync(infoPath, 'utf8'));
+        infoPlist['CFBundleExecutable'] = '${{ inputs.product-name }}';
+        infoPlist['CFBundleName'] = '${{ inputs.app-name }}';
+        infoPlist['CFBundleShortVersionString'] = '${{ inputs.version-string }}';
+        infoPlist['CFBundleVersion'] = '${{ steps.setup-env.outputs.bundle-version }}';
+        infoPlist['ITSAppUsesNonExemptEncryption'] = false;
+        infoPlist['NSHumanReadableCopyright'] = '${{ inputs.copyright }}';
+        delete infoPlist['CFBundleDocumentTypes'];
+        delete infoPlist['UTExportedTypeDeclarations'];
+        fs.writeFileSync(infoPath, plist['build'](infoPlist));
+
+        const entitlementsPath = './love-actions-ios/love/platform/xcode/love.entitlements';
+        const entitlementsPlist = plist['parse'](fs.readFileSync(entitlementsPath, 'utf8'));
+        entitlementsPlist['com.apple.security.app-sandbox'] = true;
+        fs.writeFileSync(entitlementsPath, plist['build'](entitlementsPlist));
+
+        const freetypeInfoPath = './love-actions-ios/love/platform/xcode/ios/Frameworks/freetype.framework/Resources/Info.plist';
+        const freetypeInfoPlist = plist['parse'](fs.readFileSync(freetypeInfoPath, 'utf8'));
+        freetypeInfoPlist['CFBundleIdentifier'] = 'org.freetype.freetype';
+        fs.writeFileSync(freetypeInfoPath, plist['build'](freetypeInfoPlist));
+        
+        const exportPlistPath = './love-actions-ios/love/platform/xcode/macos/macos-copy-app.plist';
+        const exportPlist = plist['parse'](fs.readFileSync(exportPlistPath, 'utf8'));
+        exportPlist['method'] = 'app-store';
+        fs.writeFileSync(exportPlistPath, plist['build'](exportPlist));
+
+        const iconPath = './love-actions-ios/love/platform/xcode/Images.xcassets/OS X AppIcon.appiconset/Contents.json';
+        const iconContents = JSON.parse(fs.readFileSync(iconPath, 'utf8'));
+        iconContents.images.forEach(image => {
+            image.filename = 'icon_' + image.size + (image.scale === '2x' ? '@2x' : '') + '.png';
+        });
+        fs.writeFileSync(iconPath, JSON.stringify(iconContents));
+
+        console.info('Project info updated.');
+        EOT
+
+        node update.js
+        rm update.js
+    - name: Build iOS app
+      env:
+        API_KEY_PATH: ~/.appstoreconnect/private_keys/AuthKey_${{ inputs.api-key-id }}.p8
+        ARCHIVE_PATH: ./love-actions-ios/archive.xcarchive
+        KEYCHAIN_PASSWORD: build_keychain_password
+        KEYCHAIN_PATH: ./love-actions-ios/build.keychain
+      shell: bash
+      run: |
+        security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_PATH
+
+        xcodebuild clean archive -quiet -allowProvisioningUpdates \
+        -authenticationKeyPath $API_KEY_PATH \
+        -authenticationKeyID ${{ inputs.api-key-id }} \
+        -authenticationKeyIssuerID ${{ inputs.api-issuer-id }} \
+        -project ./love-actions-ios/love/platform/xcode/love.xcodeproj \
+        -scheme love-ios \
+        -configuration Release \
+        -destination 'generic/platform=macOS' \
+        -archivePath ${{ env.ARCHIVE_PATH }} \
+        OTHER_CFLAGS="-Wno-everything" \
+        OTHER_CODE_SIGN_FLAGS="--deep --force --generate-entitlement-der --strict --timestamp --options runtime"
+
+        xcodebuild -exportArchive -allowProvisioningUpdates \
+        -authenticationKeyPath $API_KEY_PATH \
+        -authenticationKeyID ${{ inputs.api-key-id }} \
+        -authenticationKeyIssuerID ${{ inputs.api-issuer-id }} \
+        -archivePath ${{ env.ARCHIVE_PATH }} \
+        -exportPath ./love-actions-ios/ \
+        -exportOptionsPlist ./love-actions-ios/love/platform/xcode/macos/macos-copy-app.plist
+
+        ls -l ./love-actions-ios/
+    - name: Move ipa and logs
+      shell: bash
+      run: |
+        mv "./love-actions-ios/${{ inputs.app-name }}.pkg" "${{ inputs.output-folder }}/${{ inputs.product-name }}.ipa"
+        mv ./love-actions-ios/DistributionSummary.plist ${{ inputs.output-folder }}
+        mv ./love-actions-ios/ExportOptions.plist ${{ inputs.output-folder }}
+        mv ./love-actions-ios/Packaging.log ${{ inputs.output-folder }}
+    - name: Upload package
+      shell: bash
+      run: |
+        xcrun altool --upload-package ${{ inputs.output-folder }}/${{ inputs.product-name }}.ipa -t "ios" --apple-id "${{ inputs.apple-id }}" \
+        --bundle-version "${{ steps.setup-env.outputs.bundle-version }}" --bundle-short-version-string "${{ inputs.version-string }}" --bundle-id "${{ inputs.bundle-id }}" \
+        --apiKey ${{ inputs.api-key-id }} --apiIssuer ${{ inputs.api-issuer-id }} --show-progress
+    - name: Gather packages in output folder
+      id: gather-packages
+      shell: bash
+      run: |
+        echo ::set-output name=package-paths::$(ls -d ${{ inputs.output-folder }}/*)
+    - name: Cleanup
+      shell: bash
+      run: |
+        rm -rf ./love-actions-ios/
