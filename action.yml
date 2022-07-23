@@ -214,10 +214,10 @@ runs:
         entitlementsPlist['com.apple.security.app-sandbox'] = true;
         fs.writeFileSync(entitlementsPath, plist['build'](entitlementsPlist));
 
-        const freetypeInfoPath = './love-actions-ios/love/platform/xcode/ios/Frameworks/freetype.framework/Resources/Info.plist';
-        const freetypeInfoPlist = plist['parse'](fs.readFileSync(freetypeInfoPath, 'utf8'));
-        freetypeInfoPlist['CFBundleIdentifier'] = 'org.freetype.freetype';
-        fs.writeFileSync(freetypeInfoPath, plist['build'](freetypeInfoPlist));
+        // const freetypeInfoPath = './love-actions-ios/love/platform/xcode/ios/libraries/freetype.xcframework/Info.plist';
+        // const freetypeInfoPlist = plist['parse'](fs.readFileSync(freetypeInfoPath, 'utf8'));
+        // freetypeInfoPlist['CFBundleIdentifier'] = 'org.freetype.freetype';
+        // fs.writeFileSync(freetypeInfoPath, plist['build'](freetypeInfoPlist));
         
         const exportPlistPath = './love-actions-ios/love/platform/xcode/macos/macos-copy-app.plist';
         const exportPlist = plist['parse'](fs.readFileSync(exportPlistPath, 'utf8'));
