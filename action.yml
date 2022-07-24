@@ -189,7 +189,7 @@ runs:
         loveProject.updateBuildProperty('IPHONEOS_DEPLOYMENT_TARGET', '12.0', configuration, loveTarget);
         loveProject.updateBuildProperty('MARKETING_VERSION', '${{ inputs.version-string }}', configuration, loveTarget);
         loveProject.updateBuildProperty('PRODUCT_BUNDLE_IDENTIFIER', '${{ inputs.bundle-id }}', configuration, loveTarget);
-        loveProject.updateBuildProperty('PRODUCT_NAME', '${{ inputs.product-name }}', configuration, loveTarget);
+        loveProject.updateBuildProperty('PRODUCT_NAME', '${{ inputs.app-name }}', configuration, loveTarget);
         loveProject.updateBuildProperty('PROVISIONING_PROFILE_SPECIFIER', '""', configuration, loveTarget);
         loveProject.addResourceFile(
             './game.love',
