@@ -204,7 +204,7 @@ runs:
         infoPlist['CFBundleName'] = '${{ inputs.app-name }}';
         infoPlist['CFBundleShortVersionString'] = '${{ inputs.version-string }}';
         infoPlist['CFBundleVersion'] = '${{ steps.setup-env.outputs.bundle-version }}';
-        // infoPlist['ITSAppUsesNonExemptEncryption'] = false;
+        infoPlist['ITSAppUsesNonExemptEncryption'] = false;
         // infoPlist['NSHumanReadableCopyright'] = '${{ inputs.copyright }}';
         delete infoPlist['CFBundleDocumentTypes'];
         delete infoPlist['UTExportedTypeDeclarations'];
