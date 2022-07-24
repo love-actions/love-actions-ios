@@ -175,17 +175,18 @@ runs:
         const liblovePbxprojPath = './love-actions-ios/love/platform/xcode/liblove.xcodeproj/project.pbxproj';
         const libloveProject = xcode.project(liblovePbxprojPath).parseSync();
         const libloveTarget = 'liblove-ios'
-        libloveProject.updateBuildProperty('MACOSX_DEPLOYMENT_TARGET', '10.9', configuration, libloveTarget);
+        loveProject.updateBuildProperty('IPHONEOS_DEPLOYMENT_TARGET', '12.0', configuration, loveTarget);
         fs.writeFileSync(liblovePbxprojPath, libloveProject.writeSync());
 
         const lovePbxprojPath = './love-actions-ios/love/platform/xcode/love.xcodeproj/project.pbxproj';
         const loveProject = xcode.project(lovePbxprojPath).parseSync();
         const loveTarget = 'love-ios'
+        loveProject.removeBuildProperty('ARCHS', configuration);
         loveProject.updateBuildProperty('CODE_SIGN_IDENTITY', '"Apple Development"', configuration, loveTarget);
         loveProject.updateBuildProperty('CODE_SIGN_STYLE', '"Automatic"', configuration, loveTarget);
         loveProject.updateBuildProperty('CURRENT_PROJECT_VERSION', '${{ steps.setup-env.outputs.bundle-version }}', configuration, loveTarget);
         loveProject.updateBuildProperty('DEVELOPMENT_TEAM', '${{ inputs.team-id }}', configuration, loveTarget);
-        loveProject.updateBuildProperty('MACOSX_DEPLOYMENT_TARGET', '10.9', configuration, loveTarget);
+        loveProject.updateBuildProperty('IPHONEOS_DEPLOYMENT_TARGET', '12.0', configuration, loveTarget);
         loveProject.updateBuildProperty('MARKETING_VERSION', '${{ inputs.version-string }}', configuration, loveTarget);
         loveProject.updateBuildProperty('PRODUCT_BUNDLE_IDENTIFIER', '${{ inputs.bundle-id }}', configuration, loveTarget);
         loveProject.updateBuildProperty('PRODUCT_NAME', '${{ inputs.product-name }}', configuration, loveTarget);
@@ -199,20 +200,20 @@ runs:
 
         const infoPath = './love-actions-ios/love/platform/xcode/ios/love-ios.plist';
         const infoPlist = plist['parse'](fs.readFileSync(infoPath, 'utf8'));
-        infoPlist['CFBundleExecutable'] = '${{ inputs.product-name }}';
-        infoPlist['CFBundleName'] = '${{ inputs.app-name }}';
-        infoPlist['CFBundleShortVersionString'] = '${{ inputs.version-string }}';
-        infoPlist['CFBundleVersion'] = '${{ steps.setup-env.outputs.bundle-version }}';
-        infoPlist['ITSAppUsesNonExemptEncryption'] = false;
-        infoPlist['NSHumanReadableCopyright'] = '${{ inputs.copyright }}';
+        // infoPlist['CFBundleExecutable'] = '${{ inputs.product-name }}';
+        // infoPlist['CFBundleName'] = '${{ inputs.app-name }}';
+        // infoPlist['CFBundleShortVersionString'] = '${{ inputs.version-string }}';
+        // infoPlist['CFBundleVersion'] = '${{ steps.setup-env.outputs.bundle-version }}';
+        // infoPlist['ITSAppUsesNonExemptEncryption'] = false;
+        // infoPlist['NSHumanReadableCopyright'] = '${{ inputs.copyright }}';
         delete infoPlist['CFBundleDocumentTypes'];
         delete infoPlist['UTExportedTypeDeclarations'];
         fs.writeFileSync(infoPath, plist['build'](infoPlist));
 
-        const entitlementsPath = './love-actions-ios/love/platform/xcode/love.entitlements';
-        const entitlementsPlist = plist['parse'](fs.readFileSync(entitlementsPath, 'utf8'));
-        entitlementsPlist['com.apple.security.app-sandbox'] = true;
-        fs.writeFileSync(entitlementsPath, plist['build'](entitlementsPlist));
+        // const entitlementsPath = './love-actions-ios/love/platform/xcode/love.entitlements';
+        // const entitlementsPlist = plist['parse'](fs.readFileSync(entitlementsPath, 'utf8'));
+        // entitlementsPlist['com.apple.security.app-sandbox'] = true;
+        // fs.writeFileSync(entitlementsPath, plist['build'](entitlementsPlist));
 
         // const freetypeInfoPath = './love-actions-ios/love/platform/xcode/ios/libraries/freetype.xcframework/Info.plist';
         // const freetypeInfoPlist = plist['parse'](fs.readFileSync(freetypeInfoPath, 'utf8'));
