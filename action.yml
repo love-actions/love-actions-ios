@@ -175,7 +175,7 @@ runs:
         const liblovePbxprojPath = './love-actions-ios/love/platform/xcode/liblove.xcodeproj/project.pbxproj';
         const libloveProject = xcode.project(liblovePbxprojPath).parseSync();
         const libloveTarget = 'liblove-ios'
-        loveProject.updateBuildProperty('IPHONEOS_DEPLOYMENT_TARGET', '12.0', configuration, loveTarget);
+        libloveProject.updateBuildProperty('IPHONEOS_DEPLOYMENT_TARGET', '12.0', configuration, libloveTarget);
         fs.writeFileSync(liblovePbxprojPath, libloveProject.writeSync());
 
         const lovePbxprojPath = './love-actions-ios/love/platform/xcode/love.xcodeproj/project.pbxproj';
@@ -193,7 +193,7 @@ runs:
         loveProject.updateBuildProperty('PROVISIONING_PROFILE_SPECIFIER', '""', configuration, loveTarget);
         loveProject.addResourceFile(
             './game.love',
-            {target: loveProject.findTargetKey(`"${loveTarget}"`)},
+            {target: loveProject.findTargetKey('"' + loveTarget '"')},
             loveProject.findPBXGroupKey({name: 'Resources'})
         );
         fs.writeFileSync(lovePbxprojPath, loveProject.writeSync());
