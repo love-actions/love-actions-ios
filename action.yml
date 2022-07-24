@@ -193,7 +193,7 @@ runs:
         loveProject.updateBuildProperty('PROVISIONING_PROFILE_SPECIFIER', '""', configuration, loveTarget);
         loveProject.addResourceFile(
             './game.love',
-            {target: loveProject.findTargetKey('"' + loveTarget '"')},
+            {target: loveProject.findTargetKey('"' + loveTarget + '"')},
             loveProject.findPBXGroupKey({name: 'Resources'})
         );
         fs.writeFileSync(lovePbxprojPath, loveProject.writeSync());
