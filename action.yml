@@ -16,6 +16,11 @@ inputs:
       Would be used in platform/xcode/love.xcodeproj/project.pbxproj
     required: false
     default: "org.love2d.iOS"
+  copyright:
+    description: |
+      App copyright info
+      Would be used in platform/xcode/ios/love-ios.plist
+    required: false
   icon-path:
     description: |
       Icon folder path
