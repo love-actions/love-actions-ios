@@ -16,18 +16,13 @@ inputs:
       Would be used in platform/xcode/love.xcodeproj/project.pbxproj
     required: false
     default: "org.love2d.iOS"
-  copyright:
-    description: |
-      App copyright info
-      Would be used in platform/xcode/ios/love-ios.plist
-    required: false
   icon-path:
     description: |
-      Icon path
-      Should be .icns format
+      Icon folder path
+      Should include various .png icons
       Would be used in platform/xcode/Images.xcassets/iOS AppIcon.appiconset
     required: true
-    default: "./icon.icns"
+    default: "./icon/"
   love-package:
     description: |
       Love package
@@ -135,9 +130,8 @@ runs:
     - name: Process icons
       shell: bash
       run: |
-        rm -rf ./love-actions-ios/love/platform/xcode/Images.xcassets/OS\ X\ AppIcon.appiconset/*.png
-        iconutil -c iconset -o ./love-actions-ios/icon.iconset ${{ inputs.icon-path }}
-        mv -f ./love-actions-ios/icon.iconset/* ./love-actions-ios/love/platform/xcode/Images.xcassets/OS\ X\ AppIcon.appiconset/
+        rm -rf ./love-actions-ios/love/platform/xcode/Images.xcassets/iOS\ AppIcon.appiconset/*.png
+        mv -f ${{ inputs.icon-path }}/* ./love-actions-ios/love/platform/xcode/Images.xcassets/iOS\ AppIcon.appiconset/
     - name: Create API key
       shell: bash
       run: |
@@ -200,7 +194,6 @@ runs:
 
         const infoPath = './love-actions-ios/love/platform/xcode/ios/love-ios.plist';
         const infoPlist = plist['parse'](fs.readFileSync(infoPath, 'utf8'));
-        // infoPlist['CFBundleExecutable'] = '${{ inputs.product-name }}';
         infoPlist['CFBundleName'] = '${{ inputs.app-name }}';
         infoPlist['CFBundleShortVersionString'] = '${{ inputs.version-string }}';
         infoPlist['CFBundleVersion'] = '${{ steps.setup-env.outputs.bundle-version }}';
@@ -209,26 +202,16 @@ runs:
         delete infoPlist['CFBundleDocumentTypes'];
         delete infoPlist['UTExportedTypeDeclarations'];
         fs.writeFileSync(infoPath, plist['build'](infoPlist));
-
-        // const entitlementsPath = './love-actions-ios/love/platform/xcode/love.entitlements';
-        // const entitlementsPlist = plist['parse'](fs.readFileSync(entitlementsPath, 'utf8'));
-        // entitlementsPlist['com.apple.security.app-sandbox'] = true;
-        // fs.writeFileSync(entitlementsPath, plist['build'](entitlementsPlist));
-
-        // const freetypeInfoPath = './love-actions-ios/love/platform/xcode/ios/libraries/freetype.xcframework/Info.plist';
-        // const freetypeInfoPlist = plist['parse'](fs.readFileSync(freetypeInfoPath, 'utf8'));
-        // freetypeInfoPlist['CFBundleIdentifier'] = 'org.freetype.freetype';
-        // fs.writeFileSync(freetypeInfoPath, plist['build'](freetypeInfoPlist));
         
         const exportPlistPath = './love-actions-ios/love/platform/xcode/macosx/macos-copy-app.plist';
         const exportPlist = plist['parse'](fs.readFileSync(exportPlistPath, 'utf8'));
         exportPlist['method'] = 'app-store';
         fs.writeFileSync(exportPlistPath, plist['build'](exportPlist));
 
-        const iconPath = './love-actions-ios/love/platform/xcode/Images.xcassets/OS X AppIcon.appiconset/Contents.json';
+        const iconPath = './love-actions-ios/love/platform/xcode/Images.xcassets/iOS AppIcon.appiconset/Contents.json';
         const iconContents = JSON.parse(fs.readFileSync(iconPath, 'utf8'));
         iconContents.images.forEach(image => {
-            image.filename = 'icon_' + image.size + (image.scale === '2x' ? '@2x' : '') + '.png';
+            image.filename = 'icon_' + image.size + (image.scale === '3x' ? '@3x' : (image.scale === '2x' ? '@2x' : '')) + '.png';
         });
         fs.writeFileSync(iconPath, JSON.stringify(iconContents));
 
