@@ -199,6 +199,8 @@ runs:
         infoPlist['CFBundleVersion'] = '${{ steps.setup-env.outputs.bundle-version }}';
         infoPlist['ITSAppUsesNonExemptEncryption'] = false;
         infoPlist['NSHumanReadableCopyright'] = '${{ inputs.copyright }}';
+        infoPlist['UIRequiresFullScreen'] = true;
+        infoPlist['UIStatusBarHidden'] = true;
         delete infoPlist['CFBundleDocumentTypes'];
         delete infoPlist['UTExportedTypeDeclarations'];
         const itemIndex = infoPlist['UISupportedInterfaceOrientations'].indexOf('UIInterfaceOrientationPortrait');
