@@ -36,7 +36,7 @@ inputs:
     default: "c35356c841976eb6f370347b81eec845d5520338"
   love-patch:
     description: |
-      Git patch file path for the LÖVE source codes
+      Git patch file path for the LÖVE repo
       The patch must start from `love-ref`
       You can use `git diff` to get the patch file
     required: false
