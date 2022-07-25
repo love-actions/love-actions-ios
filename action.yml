@@ -34,6 +34,12 @@ inputs:
       Would be used to assemble the executable
     required: false
     default: "./game.love"
+  libs-path:
+    description: |
+      Path to the libs folder
+      Would copy all contents to app/libs
+      Top folder not included
+    required: false
   product-name:
     description: |
       Base name of the package
@@ -195,6 +201,19 @@ runs:
             {target: loveProject.findTargetKey('"' + loveTarget + '"')},
             loveProject.findPBXGroupKey({name: 'Resources'})
         );
+        const libFolder = '${{ inputs.libs-path }}';
+        if (libFolder !== '') {
+            fs.readdirSync(libFolder).forEach(filename => {
+                fs.copyFileSync(
+                    path.join(libFolder, filename),
+                    path.join('./love/platform/xcode', filename)
+                );
+                loveProject.addStaticLibrary(
+                    filename,
+                    {target: loveProject.findTargetKey('"' + loveTarget + '"')}
+                );
+            });
+        }
         fs.writeFileSync(lovePbxprojPath, loveProject.writeSync());
 
         const infoPath = './love-actions-ios/love/platform/xcode/ios/love-ios.plist';
