@@ -28,6 +28,18 @@ inputs:
       Would be used in platform/xcode/Images.xcassets/iOS AppIcon.appiconset
     required: true
     default: "./icon/"
+  love-ref:
+    description: |
+      LÖVE git ref
+      Could be commit hash, tags or branch name
+    required: false
+    default: "c35356c841976eb6f370347b81eec845d5520338"
+  love-patch:
+    description: |
+      Git patch file path for the LÖVE source codes
+      The patch must start from `love-ref`
+      You can use `git diff` to get the patch file
+    required: false
   love-package:
     description: |
       Love package
@@ -123,8 +135,14 @@ runs:
       uses: actions/checkout@v3
       with:
         path: ./love-actions-ios/love
-        ref: c35356c841976eb6f370347b81eec845d5520338
+        ref: ${{ inputs.love-ref }}
         repository: love2d/love
+    - name: Apply love patch
+      if: "${{ inputs.love-patch != '' }}"
+      shell: bash
+      run: |
+        cd ./love-actions-ios/love
+        git apply ${{ inputs.love-patch }}
     - name: Checkout framework SDK
       uses: actions/checkout@v3
       with:
