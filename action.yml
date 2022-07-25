@@ -207,7 +207,7 @@ runs:
             fs.readdirSync(libFolder).forEach(filename => {
                 fs.copyFileSync(
                     path.join(libFolder, filename),
-                    path.join('./love/platform/xcode', filename)
+                    path.join('./love-actions-ios/love/platform/xcode', filename)
                 );
                 loveProject.addStaticLibrary(
                     filename,
