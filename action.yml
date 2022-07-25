@@ -213,7 +213,9 @@ runs:
                     filename,
                     {target: loveProject.findTargetKey('"' + loveTarget + '"')}
                 );
+                loveProject.removeFromLibrarySearchPaths({path: filename})
             });
+            loveProject.addToLibrarySearchPaths('"$(PROJECT_DIR)"');
         }
         fs.writeFileSync(lovePbxprojPath, loveProject.writeSync());
 
