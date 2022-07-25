@@ -141,8 +141,9 @@ runs:
       if: "${{ inputs.love-patch != '' }}"
       shell: bash
       run: |
+        cp ${{ inputs.love-patch }} ./love-actions-ios/love/love.patch
         cd ./love-actions-ios/love
-        git apply ${{ inputs.love-patch }}
+        git apply ./love.patch
     - name: Checkout framework SDK
       uses: actions/checkout@v3
       with:
