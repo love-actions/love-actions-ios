@@ -234,7 +234,7 @@ runs:
                 );
                 loveProject.removeFromLibrarySearchPaths({path: filename})
             });
-            loveProject.addToLibrarySearchPaths('"$(PROJECT_DIR)"');
+            loveProject.addToLibrarySearchPaths('"$' + '(PROJECT_DIR)"');
         }
         fs.writeFileSync(lovePbxprojPath, loveProject.writeSync());
 
