@@ -156,11 +156,11 @@ runs:
         path: ./love-actions-ios/love-apple-dependencies
         ref: 402eed62c2bd654a860bb64544393285fb640497
         repository: love2d/love-apple-dependencies
-    - name: Copy framework SDK and love package
+    - name: Move framework SDK and love package
       shell: bash
       run: |
-        cp -r -f ./love-actions-ios/love-apple-dependencies/iOS/libraries ./love-actions-ios/love/platform/xcode/ios
-        cp -r -f ${{ inputs.love-package }} ./love-actions-ios/love/platform/xcode/game.love
+        mv ./love-actions-ios/love-apple-dependencies/iOS/libraries ./love-actions-ios/love/platform/xcode/ios
+        mv ${{ inputs.love-package }} ./love-actions-ios/love/platform/xcode/game.love
         mkdir -p ./love-actions-ios/love/platform/xcode/build/Debug
         mkdir -p ./love-actions-ios/love/platform/xcode/build/Release
     - name: Copy extra assets
