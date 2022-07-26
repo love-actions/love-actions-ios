@@ -52,6 +52,12 @@ inputs:
       Would copy all contents to platform/xcode/
       Top folder not included
     required: false
+  extra-assets:
+    description: |
+      List of file paths to be added to `Copy Bundle Resources` build phase
+      Don't need global quotes, separated by spaces
+      Looks like: ./assets/ ./logics/ ./main.lua ./config.lua
+    required: false
   product-name:
     description: |
       Base name of the package
@@ -150,13 +156,18 @@ runs:
         path: ./love-actions-ios/love-apple-dependencies
         ref: 402eed62c2bd654a860bb64544393285fb640497
         repository: love2d/love-apple-dependencies
-    - name: Move framework SDK and love package
+    - name: Copy framework SDK and love package
       shell: bash
       run: |
-        mv ./love-actions-ios/love-apple-dependencies/iOS/libraries ./love-actions-ios/love/platform/xcode/ios
-        mv ${{ inputs.love-package }} ./love-actions-ios/love/platform/xcode/game.love
+        cp ./love-actions-ios/love-apple-dependencies/iOS/libraries ./love-actions-ios/love/platform/xcode/ios
+        cp ${{ inputs.love-package }} ./love-actions-ios/love/platform/xcode/game.love
         mkdir -p ./love-actions-ios/love/platform/xcode/build/Debug
         mkdir -p ./love-actions-ios/love/platform/xcode/build/Release
+    - name: Copy extra assets
+      if: "${{ inputs.extra-assets != '' }}"
+      shell: bash
+      run: |
+        cp -r -f ${{ inputs.extra-assets }} ./love-actions-ios/love/platform/xcode/
     - name: Process icons
       shell: bash
       run: |
@@ -221,6 +232,16 @@ runs:
             {target: loveProject.findTargetKey('"' + loveTarget + '"')},
             loveProject.findPBXGroupKey({name: 'Resources'})
         );
+        const extraAssets = '${{ inputs.extra-assets }}';
+        if (extraAssets !== '') {
+            extraAssets.split(' ').forEach(filename => {
+                loveProject.addResourceFile(
+                    filename,
+                    {target: loveProject.findTargetKey('"' + loveTarget + '"')},
+                    loveProject.findPBXGroupKey({name: 'Resources'})
+                );
+            });
+        }
         const libFolder = '${{ inputs.libs-path }}';
         if (libFolder !== '') {
             fs.readdirSync(libFolder).forEach(filename => {
