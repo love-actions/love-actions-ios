@@ -49,7 +49,7 @@ inputs:
   libs-path:
     description: |
       Path to the libs folder
-      Would copy all contents to app/libs
+      Would copy all contents to platform/xcode/
       Top folder not included
     required: false
   product-name:
@@ -228,11 +228,13 @@ runs:
                     path.join(libFolder, filename),
                     path.join('./love-actions-ios/love/platform/xcode', filename)
                 );
-                loveProject.addStaticLibrary(
-                    filename,
-                    {target: loveProject.findTargetKey('"' + loveTarget + '"')}
-                );
-                loveProject.removeFromLibrarySearchPaths({path: filename})
+                if (path.extname(filename) === '.a') {
+                    loveProject.addStaticLibrary(
+                        filename,
+                        {target: loveProject.findTargetKey('"' + loveTarget + '"')}
+                    );
+                    loveProject.removeFromLibrarySearchPaths({path: filename})
+                }
             });
             loveProject.addToLibrarySearchPaths('"$' + '(PROJECT_DIR)"');
         }

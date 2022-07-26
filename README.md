@@ -60,7 +60,7 @@ See related actions below:
 | `love-ref`                   | `false`  | `"c35356c841976eb6f370347b81eec845d5520338"` | LÖVE git ref. Could be commit hash, tags or branch name                    |
 | `love-patch`                 | `false`  | `""`                 | Git patch file path for the LÖVE repo. The patch must start from `love-ref`. You can use `git diff -p <tag1> <tag2>` to get the patch file |
 | `love-package`               | `false`  | `"./game.love"`      | `.love` game package file path                                                                     |
-| `libs-path`                  | `false`  | `""`                 | Path to the *static* libraries folder. Would copy all contents to `platform/xcode/ios/` excluding top folder   |
+| `libs-path`                  | `false`  | `""`                 | Path to the *static* libraries folder. Would copy all contents to `platform/xcode/` excluding top folder   |
 | `product-name`               | `false`  | `"love_app"`         | Base name of the package. Used to rename products                                                  |
 | `version-string`             | `false`  | `"11.4"`             | App version string no more than 3 numbers. Used in `platform/xcode/love.xcodeproj/project.pbxproj` |
 | `output-folder`              | `false`  | `"./build"`          | Built packages output folder                                                                       |
