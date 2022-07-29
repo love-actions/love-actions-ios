@@ -342,7 +342,7 @@ runs:
         command: >-
           xcrun altool --upload-package ${{ inputs.output-folder }}/${{ inputs.product-name }}.ipa -t "ios" --apple-id "${{ inputs.apple-id }}"
           --bundle-version "${{ steps.setup-env.outputs.bundle-version }}" --bundle-short-version-string "${{ inputs.version-string }}" --bundle-id "${{ inputs.bundle-id }}"
-          --apiKeyPath ${{ inputs.api-key-id }} --apiIssuer ${{ inputs.api-issuer-id }} --show-progress
+          --apiKey ${{ inputs.api-key-id }} --apiIssuer ${{ inputs.api-issuer-id }} --show-progress
     - name: Gather packages in output folder
       id: gather-packages
       shell: bash
