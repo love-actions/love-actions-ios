@@ -117,6 +117,11 @@ inputs:
       Deliver the package to the Testflight external groups
     required: false
     default: 'false'
+  store-release:
+    description: |
+      Deliver the package to the App Store release
+    required: false
+    default: 'false'
 outputs:
   package-paths:
     description: |
@@ -140,8 +145,13 @@ runs:
         version_string = "${{ inputs.version-string }}"
         version_segments = version_string.split(".")
         build_version = version_segments[0] + version_segments[1].zfill(2) + version_segments[2].zfill(2)
+        build_type = "2"
+        if "${{ inputs.external-test }}" == "true":
+          build_type = "1"
+        if "${{ inputs.store-release }}" == "true":
+          build_type = "0"
         attempt = "${{ github.run_attempt }}"
-        os.system("echo ::set-output name=bundle-version::" + build_version + ".2.${{ github.run_number }}" + attempt.zfill(2))
+        os.system("echo ::set-output name=bundle-version::" + build_version + "." + build_type + ".${{ github.run_number }}" + attempt.zfill(2))
     - name: Checkout love
       uses: actions/checkout@v3
       with:
