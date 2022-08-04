@@ -112,6 +112,11 @@ inputs:
       App Apple ID
       Would be used to upload the package
     required: true
+  external-test:
+    description: |
+      Deliver the package to the Testflight external groups
+    required: false
+    default: 'false'
 outputs:
   package-paths:
     description: |
@@ -343,6 +348,53 @@ runs:
           xcrun altool --upload-package ${{ inputs.output-folder }}/${{ inputs.product-name }}.ipa -t "ios" --apple-id "${{ inputs.apple-id }}"
           --bundle-version "${{ steps.setup-env.outputs.bundle-version }}" --bundle-short-version-string "${{ inputs.version-string }}" --bundle-id "${{ inputs.bundle-id }}"
           --apiKey ${{ inputs.api-key-id }} --apiIssuer ${{ inputs.api-issuer-id }} --show-progress
+    - name: Deliver the package to the Testflight external groups
+      if: "${{ inputs.external-test == 'true' }}"
+      shell: bash
+      run: |
+        npm i node-app-store-connect-api sleep-promise
+
+        cat <<EOT >> test.mjs
+        import {api} from 'node-app-store-connect-api';
+        import sleep from 'sleep-promise';
+
+        const {fetchJson, postJson} = await api({
+            issuerId: '${{ inputs.api-issuer-id }}',
+            apiKey: '${{ inputs.api-key-id }}'
+        });
+
+        let buildId = '';
+
+        do {
+            for (const build of (await fetchJson('apps/${{ inputs.apple-id }}/builds?limit=100'))) {
+                if (build.attributes.version === '${{ steps.setup-env.outputs.bundle-version }}' &&
+                    build.attributes['processingState'] === 'VALID' &&
+                    build.attributes['expired'] === false && 
+                    build.attributes['minOsVersion'] === '12.0') {
+                    buildId = build.id;
+                }
+            }
+            if (buildId === '') {
+                console.log('Wait 10s for builds to be processed...');
+                await sleep(10000);
+            }
+        } while (buildId === '');
+
+        console.log(buildId);
+
+        for (const betaGroup of (await fetchJson('apps/${{ inputs.apple-id }}/betaGroups'))) {
+            if (!betaGroup.attributes['isInternalGroup']) {
+                await postJson(
+                    'betaGroups/' + betaGroup.id + '/relationships/builds',
+                    {data: [{id: buildId, type: 'builds'}]},
+                );
+                console.log('Successfully added builds to beta group:', betaGroup.attributes['name']);
+            }
+        }
+        EOT
+
+        node test.mjs
+        rm test.mjs
     - name: Gather packages in output folder
       id: gather-packages
       shell: bash
