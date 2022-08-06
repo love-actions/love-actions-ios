@@ -370,17 +370,21 @@ runs:
         let buildId = '';
 
         do {
-            for (const build of (await fetchJson('apps/${{ inputs.apple-id }}/builds?limit=100'))) {
-                if (build.attributes.version === '${{ steps.setup-env.outputs.bundle-version }}' &&
-                    build.attributes['processingState'] === 'VALID' &&
-                    build.attributes['expired'] === false && 
-                    build.attributes['minOsVersion'] === '12.0') {
-                    buildId = build.id;
+            try {
+                for (const build of (await fetchJson('apps/${{ inputs.apple-id }}/builds?limit=100'))) {
+                    if (build.attributes.version === '${{ steps.setup-env.outputs.bundle-version }}' &&
+                        build.attributes['processingState'] === 'VALID' &&
+                        build.attributes['expired'] === false && 
+                        build.attributes['minOsVersion'] === '12.0') {
+                        buildId = build.id;
+                    }
                 }
+            } catch (err) {
+                console.log(err);
             }
             if (buildId === '') {
-                console.log('Wait 10s for builds to be processed...');
-                await sleep(10000);
+                console.log('Wait 30s for builds to be processed...');
+                await sleep(30000);
             }
         } while (buildId === '');
 
