@@ -359,7 +359,8 @@ runs:
         npm i node-app-store-connect-api sleep-promise
 
         cat <<EOT >> test.mjs
-        import {api} from 'node-app-store-connect-api';
+        import { api } from 'node-app-store-connect-api';
+        import { stringify } from 'node:querystring';
         import sleep from 'sleep-promise';
 
         const {fetchJson, postJson} = await api({
@@ -368,14 +369,16 @@ runs:
         });
 
         let buildId = '';
-
+        let counter = 0;
         do {
             try {
-                for (const build of (await fetchJson('apps/${{ inputs.apple-id }}/builds?limit=100'))) {
-                    if (build.attributes.version === '${{ steps.setup-env.outputs.bundle-version }}' &&
-                        build.attributes['processingState'] === 'VALID' &&
-                        build.attributes['expired'] === false && 
-                        build.attributes['minOsVersion'] === '12.0') {
+                for (const build of (await fetchJson('builds?' + stringify({
+                    'filter[app]': '${{ inputs.apple-id }}',
+                    'filter[expired]': false,
+                    'filter[processingState]': 'VALID',
+                    'filter[version]': '${{ steps.setup-env.outputs.bundle-version }}',
+                })))) {
+                    if (build.attributes['minOsVersion'] === '12.0') {
                         buildId = build.id;
                     }
                 }
@@ -383,8 +386,9 @@ runs:
                 console.log(err);
             }
             if (buildId === '') {
-                console.log('Wait 30s for builds to be processed...');
-                await sleep(30000);
+                counter++;
+                console.log('Wait 10s for builds to be processed... (' + counter + ')');
+                await sleep(10000);
             }
         } while (buildId === '');
 
