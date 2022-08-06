@@ -144,7 +144,7 @@ runs:
         import os
         version_string = "${{ inputs.version-string }}"
         version_segments = version_string.split(".")
-        build_version = version_segments[0] + version_segments[1].zfill(2) + version_segments[2].zfill(2)
+        build_version = str(int(version_segments[0] + version_segments[1].zfill(2) + version_segments[2].zfill(2)))
         os.system("echo ::set-output name=bundle-version::" + build_version + ".${{ github.run_number }}.${{ github.run_attempt }}")
     - name: Checkout love
       uses: actions/checkout@v3
