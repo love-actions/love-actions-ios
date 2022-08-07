@@ -369,7 +369,7 @@ runs:
         });
 
         let buildId = '';
-        let counter = 0;
+        let getCounter = 0;
         do {
             try {
                 for (const build of (await fetchJson('builds?' + stringify({
@@ -386,20 +386,32 @@ runs:
                 console.log(err);
             }
             if (buildId === '') {
-                counter++;
-                console.log('Wait 10s for builds to be processed... (' + counter + ')');
+                getCounter++;
+                console.log('Wait 10s for builds to be processed... (' + getCounter + ')');
                 await sleep(10000);
             }
         } while (buildId === '');
 
-        console.log(buildId);
+        console.log('Adding app with build ID: "' + buildId + '" to external groups');
 
         for (const betaGroup of (await fetchJson('apps/${{ inputs.apple-id }}/betaGroups'))) {
             if (!betaGroup.attributes['isInternalGroup']) {
-                await postJson(
-                    'betaGroups/' + betaGroup.id + '/relationships/builds',
-                    {data: [{id: buildId, type: 'builds'}]},
-                );
+                let addSuccessfully = false;
+                let addCounter = 0;
+                do {
+                    try {
+                        await postJson(
+                            'betaGroups/' + betaGroup.id + '/relationships/builds',
+                            {data: [{id: buildId, type: 'builds'}]},
+                        );
+                        addSuccessfully = true;
+                    } catch (err) {
+                        console.log(err);
+                        addCounter++;
+                        console.log('Wait 30s to try add again... (' + addCounter + ')');
+                        await sleep(30000);
+                    }
+                } while (!addSuccessfully);
                 console.log('Successfully added builds to beta group:', betaGroup.attributes['name']);
             }
         }
