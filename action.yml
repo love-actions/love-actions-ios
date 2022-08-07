@@ -387,8 +387,8 @@ runs:
             }
             if (buildId === '') {
                 getCounter++;
-                console.log('Wait 10s for builds to be processed... (' + getCounter + ')');
-                await sleep(10000);
+                console.log('Wait 30s for builds to be processed... (' + getCounter + ')');
+                await sleep(30000);
             }
         } while (buildId === '');
 
