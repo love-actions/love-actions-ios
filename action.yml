@@ -396,7 +396,7 @@ runs:
         let canAddToExternal = false;
         do {
             let {externalBuildState} = (await fetchJson('buildBetaDetails/' + buildId)).attributes;
-            console.log('Build's external build state is: ' + externalBuildState);
+            console.log('External build state is: ' + externalBuildState);
             if (externalBuildState === 'READY_FOR_BETA_SUBMISSION') {
                 canAddToExternal = true;
             } else {
