@@ -400,6 +400,7 @@ runs:
             if (externalBuildState === 'READY_FOR_BETA_SUBMISSION') {
                 canAddToExternal = true;
             } else {
+                checkCounter++;
                 console.log('Wait 30s for build to be ready for external testing... (' + checkCounter + ')');
                 await sleep(30000);
             }
