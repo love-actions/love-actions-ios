@@ -387,31 +387,32 @@ runs:
             }
             if (buildId === '') {
                 getCounter++;
-                console.log('Wait 30s for builds to be processed... (' + getCounter + ')');
+                console.log('Wait 30s for build to be processed... (' + getCounter + ')');
                 await sleep(30000);
             }
         } while (buildId === '');
+
+        let checkCounter = 0;
+        let canAddToExternal = false;
+        do {
+            let {externalBuildState} = (await fetchJson('buildBetaDetails/' + buildId)).attributes;
+            console.log('Build's external build state is: ' + externalBuildState);
+            if (externalBuildState === 'READY_FOR_BETA_SUBMISSION') {
+                canAddToExternal = true;
+            } else {
+                console.log('Wait 30s for build to be ready for external testing... (' + checkCounter + ')');
+                await sleep(30000);
+            }
+        } while (!canAddToExternal);
 
         console.log('Adding app with build ID: "' + buildId + '" to external groups');
 
         for (const betaGroup of (await fetchJson('apps/${{ inputs.apple-id }}/betaGroups'))) {
             if (!betaGroup.attributes['isInternalGroup']) {
-                let addSuccessfully = false;
-                let addCounter = 0;
-                do {
-                    try {
-                        await postJson(
-                            'betaGroups/' + betaGroup.id + '/relationships/builds',
-                            {data: [{id: buildId, type: 'builds'}]},
-                        );
-                        addSuccessfully = true;
-                    } catch (err) {
-                        console.log(err);
-                        addCounter++;
-                        console.log('Wait 30s to try add again... (' + addCounter + ')');
-                        await sleep(30000);
-                    }
-                } while (!addSuccessfully);
+                await postJson(
+                    'betaGroups/' + betaGroup.id + '/relationships/builds',
+                    {data: [{id: buildId, type: 'builds'}]},
+                );
                 console.log('Successfully added builds to beta group:', betaGroup.attributes['name']);
             }
         }
