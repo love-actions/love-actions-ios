@@ -146,8 +146,9 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ needs.get-info.outputs.base-name }}_iOS_ipa
-          path: ${{ env.OUTPUT_FOLDER }}/${{ steps.process-app-name.outputs.product-name }}.ipa
+          path: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_NAME }}.ipa
 ```
+
 ## All inputs
 
 | Name                           | Required  | Default                                        | Description                                                                                                                                     |
