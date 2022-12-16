@@ -281,10 +281,6 @@ runs:
         infoPlist['UIStatusBarHidden'] = true;
         delete infoPlist['CFBundleDocumentTypes'];
         delete infoPlist['UTExportedTypeDeclarations'];
-        const itemIndex = infoPlist['UISupportedInterfaceOrientations'].indexOf('UIInterfaceOrientationPortrait');
-        if (itemIndex !== -1) {
-            infoPlist['UISupportedInterfaceOrientations'].splice(itemIndex, 1);
-        }
         fs.writeFileSync(infoPath, plist['build'](infoPlist));
         
         const exportPlistPath = './love-actions-ios/love/platform/xcode/macosx/macos-copy-app.plist';
